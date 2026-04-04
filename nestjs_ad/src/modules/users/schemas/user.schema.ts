@@ -23,14 +23,14 @@ export class User {
   @Prop()
   image: string;
 
-  @Prop()
+  @Prop({ default: 'USERS' })
   role: string;
 
-  @Prop()
+  @Prop({ default: 'LOCAL' })
   accountType: string;
 
-  @Prop()
-  isActive: string;
+  @Prop({ default: false })
+  isActive: boolean;
 
   @Prop()
   codeId: string;
@@ -39,4 +39,4 @@ export class User {
   codeExpired: Date;
 }
 
-export const ReviewSchema = SchemaFactory.createForClass(User);
+export const UserSchema = SchemaFactory.createForClass(User);
