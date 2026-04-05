@@ -3,6 +3,8 @@ import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from './schemas/user.schema';
+import { APP_GUARD } from '@nestjs/core';
+import { JwtGuard } from 'src/auth/Guard/jwt.guard';
 
 @Module({
   imports: [

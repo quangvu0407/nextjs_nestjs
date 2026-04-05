@@ -10,11 +10,14 @@ import {
 import { AuthService } from './auth.service';
 import { LocalGuard } from './Guard/local.guard';
 import { JwtGuard } from './Guard/jwt.guard';
+import { Public } from 'src/decorator/customize.guard';
+import { CreateAuthDto } from './dto/create-auth.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
   @Post('login')
+  @Public()
   @UseGuards(LocalGuard)
   handleLogin(@Request() req) {
     if (!req.user) {
@@ -26,6 +29,12 @@ export class AuthController {
   @UseGuards(JwtGuard)
   @Get('profile')
   getProfile(@Request() req) {
-    return req.user
+    return req.user;
+  }
+
+  @Post('register')
+  @Public()
+  register(@Body() registerDto: CreateAuthDto) {
+    return this.authService.handleRegister(registerDto);
   }
 }
