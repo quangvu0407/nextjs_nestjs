@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { MenusService } from './menus.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
@@ -23,8 +24,12 @@ export class MenusController {
 
   @Public()
   @Get()
-  findAll() {
-    return this.menusService.findAll();
+  findAll(
+    @Query() query: any,
+    @Query('current') cuurent: string,
+    @Query('pageSize') pageSize: string,
+  ) {
+    return this.menusService.findAll(query, +cuurent, +pageSize);
   }
 
   @Get(':id')

@@ -5,6 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Menu } from './schemas/menu.schema';
 import { Model } from 'mongoose';
 import { RestaurantsService } from '../restaurants/restaurants.service';
+import aqp from 'api-query-params';
 
 @Injectable()
 export class MenusService {
@@ -25,8 +26,23 @@ export class MenusService {
     return menus;
   }
 
-  async findAll() {
-    return await this.menuModel.find();
+  async findAll(query: any, current: number, pageSize: number) {
+    const { current: c, pageSize: p, ...rest } = query;
+    current = +c || 1;
+    pageSize = +p || 5;
+    const { filter, sort } = aqp(rest);
+
+    const totalItems = await this.menuModel.countDocuments(filter);
+    const totalPage = Math.ceil(totalItems / pageSize);
+    const offset = (current - 1) * pageSize;
+
+    const result = await this.menuModel
+      .find(filter)
+      .limit(pageSize)
+      .skip(offset)
+      .sort(sort as any);
+
+    return { current, result, totalPage };
   }
 
   async findOne(_id: string) {
