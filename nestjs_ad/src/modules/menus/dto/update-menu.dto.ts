@@ -1,4 +1,13 @@
-import { PartialType } from '@nestjs/mapped-types';
-import { CreateMenuDto } from './create-menu.dto';
+import { IsNotEmpty, IsOptional } from 'class-validator';
 
-export class UpdateMenuDto extends PartialType(CreateMenuDto) {}
+export class UpdateMenuDto {
+  @IsNotEmpty({ message: 'Tiêu đề không được để trống' })
+  title: string;
+
+  @IsOptional()
+  @IsNotEmpty({ message: 'Mô tả không được để trống' })
+  description: string;
+
+  @IsOptional()
+  image: string;
+}

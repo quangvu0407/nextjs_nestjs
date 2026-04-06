@@ -1,7 +1,16 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { MenusService } from './menus.service';
 import { CreateMenuDto } from './dto/create-menu.dto';
 import { UpdateMenuDto } from './dto/update-menu.dto';
+import { Public } from 'src/decorator/customize.guard';
 
 @Controller('menus')
 export class MenusController {
@@ -12,23 +21,24 @@ export class MenusController {
     return this.menusService.create(createMenuDto);
   }
 
+  @Public()
   @Get()
   findAll() {
     return this.menusService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.menusService.findOne(+id);
+  findOne(@Param('id') _id: string) {
+    return this.menusService.findOne(_id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMenuDto: UpdateMenuDto) {
-    return this.menusService.update(+id, updateMenuDto);
+  update(@Param('id') _id: string, @Body() updateMenuDto: UpdateMenuDto) {
+    return this.menusService.update(_id, updateMenuDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.menusService.remove(+id);
+  remove(@Param('id') _id: string) {
+    return this.menusService.remove(_id);
   }
 }

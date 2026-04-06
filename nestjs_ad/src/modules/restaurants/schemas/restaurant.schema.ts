@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 
-export type USerDocument = HydratedDocument<Restaurant>;
+export type RestaurantsDocument = HydratedDocument<Restaurant>;
 
 @Schema({ timestamps: true })
 export class Restaurant {
@@ -14,11 +14,11 @@ export class Restaurant {
   @Prop()
   address: string;
 
-  @Prop()
+  @Prop({ unique: true })
   email: string;
 
-  @Prop()
+  @Prop({ default: 0 })
   rating: number;
 }
 
-export const ReviewSchema = SchemaFactory.createForClass(Restaurant);
+export const RestaurantsSchema = SchemaFactory.createForClass(Restaurant);
