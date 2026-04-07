@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsNotEmpty, IsOptional } from 'class-validator';
 
 export class CreateMenuDto {
   @IsNotEmpty({ message: 'cửa hàng không được để trống' })

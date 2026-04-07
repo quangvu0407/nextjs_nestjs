@@ -26,12 +26,13 @@ export class MenusController {
   @Get()
   findAll(
     @Query() query: any,
-    @Query('current') cuurent: string,
+    @Query('current') current: string,
     @Query('pageSize') pageSize: string,
   ) {
-    return this.menusService.findAll(query, +cuurent, +pageSize);
+    return this.menusService.findAll(query, +current, +pageSize);
   }
 
+  @Public()
   @Get(':id')
   findOne(@Param('id') _id: string) {
     return this.menusService.findOne(_id);

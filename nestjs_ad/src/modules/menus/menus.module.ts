@@ -17,5 +17,6 @@ import { RestaurantsModule } from '../restaurants/restaurants.module';
   ],
   controllers: [MenusController],
   providers: [MenusService],
+  exports: [MenusService],
 })
-export class MenusModule {}
+export class MenusModule { }

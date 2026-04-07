@@ -1,25 +1,25 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import mongoose, { HydratedDocument } from 'mongoose';
+import mongoose, { HydratedDocument, Types } from 'mongoose';
 import { Menu } from 'src/modules/menus/schemas/menu.schema';
 
-export type USerDocument = HydratedDocument<MenuItem>;
+export type MenuItemDocument = HydratedDocument<MenuItem>;
 
 @Schema({ timestamps: true })
 export class MenuItem {
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Menu.name })
-  menu: mongoose.Schema.Types.ObjectId;
+  menu: Types.ObjectId;
 
   @Prop()
   title: string;
 
   @Prop()
-  description: Date;
+  description: string;
 
   @Prop()
-  basePrice: Date;
+  basePrice: number;
 
   @Prop()
   image: string;
 }
 
-export const ReviewSchema = SchemaFactory.createForClass(MenuItem);
+export const MenuItemSchema = SchemaFactory.createForClass(MenuItem);
