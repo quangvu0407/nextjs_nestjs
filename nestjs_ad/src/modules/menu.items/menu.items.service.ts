@@ -13,7 +13,7 @@ export class MenuItemsService {
     @InjectModel(MenuItem.name)
     private menuItemModel: Model<MenuItem>,
     private menusService: MenusService,
-  ) { }
+  ) {}
 
   async create(createMenuItemDto: CreateMenuItemDto) {
     const menu = await this.menusService.findOne(createMenuItemDto.menu);
@@ -44,6 +44,10 @@ export class MenuItemsService {
 
   async findOne(_id: string) {
     return await this.menuItemModel.findById(_id);
+  }
+
+  async findByIds(ids: string[]) {
+    return await this.menuItemModel.find({ _id: { $in: ids } });
   }
 
   async update(_id: string, updateMenuItemDto: UpdateMenuItemDto) {

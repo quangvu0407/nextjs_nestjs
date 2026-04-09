@@ -1,34 +1,55 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { MenuItemsOptionService } from './menu.items.option.service';
-import { CreateMenuItemsOptionDto } from './dto/create-menu.items.option.dto';
-import { UpdateMenuItemsOptionDto } from './dto/update-menu.items.option.dto';
+import { CreateMenuItemOptionDto } from './dto/create-menu.items.option.dto';
+import { UpdateMenuItemOptionDto } from './dto/update-menu.items.option.dto';
+import { Public } from 'src/decorator/customize.guard';
 
-@Controller('menu.items.option')
+@Controller('menu-item-options')
 export class MenuItemsOptionController {
-  constructor(private readonly menuItemsOptionService: MenuItemsOptionService) {}
+  constructor(
+    private readonly menuItemsOptionService: MenuItemsOptionService,
+  ) {}
 
   @Post()
-  create(@Body() createMenuItemsOptionDto: CreateMenuItemsOptionDto) {
-    return this.menuItemsOptionService.create(createMenuItemsOptionDto);
+  create(@Body() createMenuItemOptionDto: CreateMenuItemOptionDto) {
+    return this.menuItemsOptionService.create(createMenuItemOptionDto);
   }
 
+  @Public()
   @Get()
-  findAll() {
-    return this.menuItemsOptionService.findAll();
+  findAll(
+    @Query() query: any,
+    @Query('current') current: string,
+    @Query('pageSize') pageSize: string,
+  ) {
+    return this.menuItemsOptionService.findAll(query, +current, +pageSize);
   }
 
+  @Public()
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.menuItemsOptionService.findOne(+id);
+  findOne(@Param('id') _id: string) {
+    return this.menuItemsOptionService.findOne(_id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMenuItemsOptionDto: UpdateMenuItemsOptionDto) {
-    return this.menuItemsOptionService.update(+id, updateMenuItemsOptionDto);
+  update(
+    @Param('id') _id: string,
+    @Body() updateMenuItemOptionDto: UpdateMenuItemOptionDto,
+  ) {
+    return this.menuItemsOptionService.update(_id, updateMenuItemOptionDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.menuItemsOptionService.remove(+id);
+  remove(@Param('id') _id: string) {
+    return this.menuItemsOptionService.remove(_id);
   }
 }

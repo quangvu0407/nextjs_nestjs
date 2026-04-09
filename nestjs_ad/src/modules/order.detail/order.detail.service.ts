@@ -1,26 +1,29 @@
 import { Injectable } from '@nestjs/common';
-import { CreateOrderDetailDto } from './dto/create-order.detail.dto';
-import { UpdateOrderDetailDto } from './dto/update-order.detail.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { ClientSession, Model, Types } from 'mongoose';
+import { OrderDetail } from './schemas/order.detail.schema';
+
+export interface CreateOrderDetailInput {
+  order: Types.ObjectId;
+  menuItem: string;
+  menuItemOption?: string;
+}
 
 @Injectable()
 export class OrderDetailService {
-  create(createOrderDetailDto: CreateOrderDetailDto) {
-    return 'This action adds a new orderDetail';
+  constructor(
+    @InjectModel(OrderDetail.name)
+    private orderDetailModel: Model<OrderDetail>,
+  ) {}
+
+  async createMany(details: CreateOrderDetailInput[]) {
+    return await this.orderDetailModel.insertMany(details);
   }
 
-  findAll() {
-    return `This action returns all orderDetail`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} orderDetail`;
-  }
-
-  update(id: number, updateOrderDetailDto: UpdateOrderDetailDto) {
-    return `This action updates a #${id} orderDetail`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} orderDetail`;
+  async findByOrder(orderId: string) {
+    return await this.orderDetailModel
+      .find({ order: orderId })
+      .populate('menuItem')
+      .populate('menuItemOption');
   }
 }
