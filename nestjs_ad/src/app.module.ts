@@ -17,6 +17,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtGuard } from './auth/Guard/jwt.guard';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
+import { join } from 'path';
 
 @Module({
   imports: [
@@ -45,13 +46,13 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.ad
         defaults: {
           from: '"nest-modules" <modules@nestjs.com>',
         },
-        // template: {
-        //   dir: __dirname + '/templates',
-        //   adapter: new HandlebarsAdapter(),
-        //   options: {
-        //     strict: true,
-        //   },
-        // },
+        template: {
+          dir: join(__dirname + '/mail/templates'),
+          adapter: new HandlebarsAdapter(),
+          options: {
+            strict: true,
+          },
+        },
       }),
       inject: [ConfigService],
     }),

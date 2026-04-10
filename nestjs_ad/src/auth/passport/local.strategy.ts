@@ -14,6 +14,11 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new BadRequestException('Invalid email or password');
     }
+    if (!user.isActive) {
+      throw new BadRequestException(
+        'Tài khoản chưa được kích hoạt với email này',
+      );
+    }
     return user;
   }
 }
