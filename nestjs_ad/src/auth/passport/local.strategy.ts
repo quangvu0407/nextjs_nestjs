@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { Strategy } from 'passport-local';
 import { AuthService } from '../auth.service';
@@ -15,7 +19,7 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       throw new BadRequestException('Invalid email or password');
     }
     if (!user.isActive) {
-      throw new BadRequestException(
+      throw new UnauthorizedException(
         'Tài khoản chưa được kích hoạt với email này',
       );
     }

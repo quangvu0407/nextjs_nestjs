@@ -10,7 +10,7 @@ import {
 import { AuthService } from './auth.service';
 import { LocalGuard } from './Guard/local.guard';
 import { JwtGuard } from './Guard/jwt.guard';
-import { Public } from 'src/decorator/customize.guard';
+import { Public, ResponseMessage } from 'src/decorator/customize.guard';
 import { CreateAuthDto } from './dto/create-auth.dto';
 import { MailerService } from '@nestjs-modules/mailer';
 
@@ -23,6 +23,7 @@ export class AuthController {
   @Post('login')
   @Public()
   @UseGuards(LocalGuard)
+  @ResponseMessage('Login')
   handleLogin(@Request() req) {
     if (!req.user) {
       throw new BadRequestException('Error');

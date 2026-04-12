@@ -13,11 +13,12 @@ import { MenuItemsModule } from './modules/menu.items/menu.items.module';
 import { MenuItemsOptionModule } from './modules/menu.items.option/menu.items.option.module';
 import { LikesModule } from './modules/likes/likes.module';
 import { AuthModule } from './auth/auth.module';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { JwtGuard } from './auth/Guard/jwt.guard';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/adapters/handlebars.adapter';
 import { join } from 'path';
+import { TransformInterceptor } from './core/transform.intercepter';
 
 @Module({
   imports: [
@@ -73,6 +74,10 @@ import { join } from 'path';
     {
       provide: APP_GUARD,
       useClass: JwtGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TransformInterceptor,
     },
   ],
 })
