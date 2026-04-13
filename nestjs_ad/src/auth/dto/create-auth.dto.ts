@@ -11,3 +11,11 @@ export class CreateAuthDto {
   @IsNotEmpty()
   password: string;
 }
+
+export class CodeAuthDto {
+  @IsNotEmpty({ message: 'Code không được để trống' })
+  code: string;
+
+  @IsNotEmpty({ message: 'Id không đượ để trống' })
+  _id: string;
+}

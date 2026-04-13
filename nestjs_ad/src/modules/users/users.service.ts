@@ -6,7 +6,7 @@ import { User } from './schemas/user.schema';
 import mongoose, { Model } from 'mongoose';
 import { hashPasswordHelper } from 'src/helpers/utils';
 import aqp from 'api-query-params';
-import { CreateAuthDto } from 'src/auth/dto/create-auth.dto';
+import { CodeAuthDto, CreateAuthDto } from 'src/auth/dto/create-auth.dto';
 import { v4 as uuidv4 } from 'uuid';
 import dayjs from 'dayjs';
 import { MailerService } from '@nestjs-modules/mailer';
@@ -17,7 +17,7 @@ export class UsersService {
     @InjectModel(User.name)
     private userModel: Model<User>,
     private readonly mailerService: MailerService,
-  ) {}
+  ) { }
 
   isEmailExist = async (email: string) => {
     const user = await this.userModel.exists({ email });
@@ -94,11 +94,20 @@ export class UsersService {
   async handleRegister(registerDto: CreateAuthDto) {
     const { name, email, password } = registerDto;
 
-    //check Email
-    const isExist = await this.isEmailExist(email);
-    if (isExist) {
-      throw new BadRequestException(`Email already ${email}`);
+    // Check if email exists and already active
+    const existingUser = await this.userModel.findOne({ email });
+    if (existingUser) {
+      if (existingUser.isActive) {
+        throw new BadRequestException(`Email already exists: ${email}`);
+      }
+      // Email exists but not active → resend activation code
+      await this.userModel.updateOne(
+        { email },
+        { name, password: await hashPasswordHelper(password) },
+      );
+      return this.handleSentCode(existingUser._id.toString());
     }
+
     const hashPassword = await hashPasswordHelper(password);
     const codeId = uuidv4();
     const user = await this.userModel.create({
@@ -126,5 +135,51 @@ export class UsersService {
     return {
       _id: user._id,
     };
+  }
+
+  async handleActive(data: CodeAuthDto) {
+    const user = await this.userModel.findOne({
+      _id: data._id,
+      codeId: data.code,
+    });
+    if (!user) {
+      throw new BadRequestException('Mã code không hợp lệ hoặc hết hạn');
+    }
+
+    const isBeforeCode = dayjs().isBefore(user.codeExpired);
+    if (isBeforeCode) {
+      await this.userModel.updateOne({ _id: data._id }, { isActive: true });
+      return { isBeforeCode };
+    }
+    return data;
+  }
+
+  async handleSentCode(_id: string) {
+    const user = await this.userModel.findById(_id);
+    if (!user) {
+      throw new BadRequestException('Tài khoản không tồn tại');
+    }
+    if (user.isActive) {
+      throw new BadRequestException('Tài khoản đã được kích hoạt');
+    }
+
+    const codeId = uuidv4();
+    await this.userModel.updateOne(
+      { _id },
+      { codeId, codeExpired: dayjs().add(5, 'minutes').toDate() },
+    );
+
+    await this.mailerService.sendMail({
+      to: user.email,
+      subject: 'Activate your account',
+      text: 'Welcome',
+      template: 'register',
+      context: {
+        name: user.name ?? user.email,
+        activationCode: codeId,
+        year: '2026',
+      },
+    });
+    return { _id: user._id };
   }
 }
