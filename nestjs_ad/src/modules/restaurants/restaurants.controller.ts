@@ -7,7 +7,10 @@ import {
   Param,
   Delete,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { RestaurantsService } from './restaurants.service';
 import { CreateRestaurantDto } from './dto/create-restaurant.dto';
 import { UpdateRestaurantDto } from './dto/update-restaurant.dto';
@@ -15,11 +18,15 @@ import { Public } from 'src/decorator/customize.guard';
 
 @Controller('restaurants')
 export class RestaurantsController {
-  constructor(private readonly restaurantsService: RestaurantsService) {}
+  constructor(private readonly restaurantsService: RestaurantsService) { }
 
-  @Post('')
-  create(@Body() createRestaurantDto: CreateRestaurantDto) {
-    return this.restaurantsService.create(createRestaurantDto);
+  @Post('add')
+  @UseInterceptors(FileInterceptor('image'))
+  create(
+    @Body() createRestaurantDto: CreateRestaurantDto,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    return this.restaurantsService.create(createRestaurantDto, file);
   }
 
   @Public()
@@ -39,11 +46,13 @@ export class RestaurantsController {
   }
 
   @Patch(':id')
+  @UseInterceptors(FileInterceptor('image'))
   update(
     @Param('id') _id: string,
     @Body() updateRestaurantDto: UpdateRestaurantDto,
+    @UploadedFile() file: Express.Multer.File,
   ) {
-    return this.restaurantsService.update(_id, updateRestaurantDto);
+    return this.restaurantsService.update(_id, updateRestaurantDto, file);
   }
 
   @Delete(':id')

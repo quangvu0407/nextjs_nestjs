@@ -3,15 +3,17 @@ import { RestaurantsService } from './restaurants.service';
 import { RestaurantsController } from './restaurants.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Restaurant, RestaurantsSchema } from './schemas/restaurant.schema';
+import { MinioModule } from '../minio/minio.module';
 
 @Module({
   imports: [
     MongooseModule.forFeature([
       { name: Restaurant.name, schema: RestaurantsSchema },
     ]),
+    MinioModule,
   ],
   controllers: [RestaurantsController],
   providers: [RestaurantsService],
   exports: [RestaurantsService],
 })
-export class RestaurantsModule {}
+export class RestaurantsModule { }

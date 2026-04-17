@@ -19,6 +19,9 @@ export class Restaurant {
 
   @Prop({ default: 0 })
   rating: number;
+
+  @Prop()
+  image: string;
 }
 
 export const RestaurantsSchema = SchemaFactory.createForClass(Restaurant);

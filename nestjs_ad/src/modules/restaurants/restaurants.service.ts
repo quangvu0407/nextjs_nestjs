@@ -5,30 +5,33 @@ import { Model } from 'mongoose';
 import { Restaurant } from './schemas/restaurant.schema';
 import { InjectModel } from '@nestjs/mongoose';
 import aqp from 'api-query-params';
+import { MinioService } from '../minio/minio.service';
 
 @Injectable()
 export class RestaurantsService {
   constructor(
     @InjectModel(Restaurant.name)
     private restaurantsModel: Model<Restaurant>,
-  ) {}
-  async create(createRestaurantDto: CreateRestaurantDto) {
+    private minioService: MinioService,
+  ) { }
+
+  async create(createRestaurantDto: CreateRestaurantDto, file?: Express.Multer.File) {
     const { name, phone, address, email } = createRestaurantDto;
 
-    //check Email
     const isExist = await this.isEmailExist(email);
     if (isExist) {
       throw new BadRequestException(`Email ${email} already exists`);
     }
+
+    let image: string | undefined;
+    if (file) {
+      image = await this.minioService.uploadFile(file);
+    }
+
     const restaurant = await this.restaurantsModel.create({
-      name,
-      phone,
-      address,
-      email,
+      name, phone, address, email, image,
     });
-    return {
-      _id: restaurant._id,
-    };
+    return { _id: restaurant._id };
   }
 
   isEmailExist = async (email: string) => {
@@ -64,13 +67,22 @@ export class RestaurantsService {
     return this.restaurantsModel.findOne({ _id });
   }
 
-  async update(_id: string, updateRestaurantDto: UpdateRestaurantDto) {
+  async update(_id: string, updateRestaurantDto: UpdateRestaurantDto, file?: Express.Multer.File) {
     const restaurant = await this.restaurantsModel.findById(_id);
     if (!restaurant) {
       throw new BadRequestException('Không tìm thấy nhà hàng');
     }
+
+    if (file) {
+      // Xóa ảnh cũ nếu có
+      if (restaurant.image) {
+        await this.minioService.deleteFile(restaurant.image);
+      }
+      updateRestaurantDto.image = await this.minioService.uploadFile(file);
+    }
+
     return await this.restaurantsModel.updateOne(
-      { _id: _id },
+      { _id },
       { $set: updateRestaurantDto },
     );
   }

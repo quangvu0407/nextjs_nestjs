@@ -16,4 +16,7 @@ export class CreateRestaurantDto {
 
   @IsOptional()
   rating: number;
+
+  @IsOptional()
+  image: string;
 }
