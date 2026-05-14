@@ -14,4 +14,3 @@ export default async function RestaurantPage({ params }: { params: Promise<{ id:
 
   return <RestaurantDetail restaurant={restData.data} menus={menuData.data?.result ?? []} />;
 }
-

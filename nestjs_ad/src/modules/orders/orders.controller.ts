@@ -15,7 +15,7 @@ import { UpdateOrderDto } from './dto/update-order.dto';
 
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(private readonly ordersService: OrdersService) { }
 
   @Post()
   create(@Body() createOrderDto: CreateOrderDto, @Request() req: any) {
@@ -27,8 +27,9 @@ export class OrdersController {
     @Query() query: any,
     @Query('current') current: string,
     @Query('pageSize') pageSize: string,
+    @Request() req: any,
   ) {
-    return this.ordersService.findAll(query, +current, +pageSize);
+    return this.ordersService.findAll(query, +current, +pageSize, req.user._id);
   }
 
   @Get(':id')

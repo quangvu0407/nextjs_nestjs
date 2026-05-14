@@ -17,7 +17,7 @@ export class UsersService {
     @InjectModel(User.name)
     private userModel: Model<User>,
     private readonly mailerService: MailerService,
-  ) { }
+  ) {}
 
   isEmailExist = async (email: string) => {
     const user = await this.userModel.exists({ email });

@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import aqp from 'api-query-params';
 import { MenuItem } from './schemas/menu.item.schema';
 import { CreateMenuItemDto } from './dto/create-menu.item.dto';
@@ -13,7 +13,7 @@ export class MenuItemsService {
     @InjectModel(MenuItem.name)
     private menuItemModel: Model<MenuItem>,
     private menusService: MenusService,
-  ) {}
+  ) { }
 
   async create(createMenuItemDto: CreateMenuItemDto) {
     const menu = await this.menusService.findOne(createMenuItemDto.menu);
@@ -29,17 +29,40 @@ export class MenuItemsService {
     pageSize = +p || 5;
     const { filter, sort } = aqp(rest);
 
-    const totalItems = await this.menuItemModel.countDocuments(filter);
-    const totalPage = Math.ceil(totalItems / pageSize);
+    // Convert ObjectId fields từ string sang ObjectId để $match hoạt động đúng
+    if (filter.menu) filter.menu = new Types.ObjectId(filter.menu);
+
     const offset = (current - 1) * pageSize;
 
-    const result = await this.menuItemModel
-      .find(filter)
-      .limit(pageSize)
-      .skip(offset)
-      .sort(sort as any);
+    // Dùng aggregation để join + count trong 1 query duy nhất
+    const [data] = await this.menuItemModel.aggregate([
+      { $match: filter },
+      {
+        $facet: {
+          // Đếm tổng
+          totalItems: [{ $count: 'count' }],
+          // Lấy data + join options
+          result: [
+            { $sort: (sort ?? { _id: 1 }) as Record<string, 1 | -1> },
+            { $skip: offset },
+            { $limit: pageSize },
+            {
+              $lookup: {
+                from: 'menuitemoptions', // tên collection trong MongoDB
+                localField: '_id',
+                foreignField: 'menuItem',
+                as: 'options',
+              },
+            },
+          ],
+        },
+      },
+    ]);
 
-    return { current, result, totalPage };
+    const totalItems = data.totalItems[0]?.count ?? 0;
+    const totalPage = Math.ceil(totalItems / pageSize);
+
+    return { current, result: data.result, totalPage };
   }
 
   async findOne(_id: string) {

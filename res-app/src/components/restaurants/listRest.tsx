@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Card,
   Row,
@@ -17,43 +17,117 @@ import {
   PhoneOutlined,
   ShopOutlined,
 } from "@ant-design/icons";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { IRestaurant } from "@/types/restaurant.type";
+import { HeartOutlined, HeartFilled } from "@ant-design/icons";
+import { useSession } from "next-auth/react";
 
 const { Text, Title } = Typography;
 
 const COLORS = [
-  "#e53935",
-  "#fb8c00",
-  "#43a047",
-  "#1e88e5",
-  "#8e24aa",
-  "#00897b",
+  "#e53935", "#fb8c00", "#43a047", "#1e88e5", "#8e24aa", "#00897b",
 ];
+
+// Nhận likedIds + onToggle từ parent, không tự fetch
+const LikeButton = ({
+  restaurantId,
+  liked,
+  onToggle,
+}: {
+  restaurantId: string;
+  liked: boolean;
+  onToggle: (id: string) => void;
+}) => (
+  <button
+    onClick={(e) => { e.stopPropagation(); onToggle(restaurantId); }}
+    style={{
+      position: "absolute", top: 10, right: 10,
+      background: "rgba(255,255,255,0.85)", border: "none",
+      borderRadius: "50%", width: 32, height: 32,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      cursor: "pointer", fontSize: 16, boxShadow: "0 1px 4px rgba(0,0,0,0.2)",
+    }}
+  >
+    {liked
+      ? <HeartFilled style={{ color: "#e53935" }} />
+      : <HeartOutlined style={{ color: "#e53935" }} />}
+  </button>
+);
 
 const ListRest = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const keyword = searchParams.get("search") ?? "";
+  const { data: session } = useSession();
+
   const [restaurants, setRestaurants] = useState<IRestaurant[]>([]);
   const [total, setTotal] = useState(0);
   const [current, setCurrent] = useState(1);
   const [loading, setLoading] = useState(true);
+  // Set các restaurantId đã like - fetch 1 lần duy nhất
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const pageSize = 6;
 
+  // Fetch liked ids 1 lần khi login
   useEffect(() => {
-    fetchRestaurants(current);
-  }, [current]);
+    if (!session?.user?.access_token) return;
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/likes/my/ids`, {
+      headers: { Authorization: `Bearer ${session.user.access_token}` },
+    })
+      .then((r) => r.json())
+      .then((res: { data: string[] }) => setLikedIds(new Set(res.data ?? [])))
+      .catch(() => { });
+  }, [session]);
 
-  const fetchRestaurants = async (page: number) => {
-    setLoading(true);
-    console.log(process.env.NEXT_PUBLIC_API_URL);
+  const handleToggle = useCallback(async (restaurantId: string) => {
+    if (!session?.user?.access_token) return;
+    // Optimistic update
+    setLikedIds((prev) => {
+      const next = new Set(prev);
+      next.has(restaurantId) ? next.delete(restaurantId) : next.add(restaurantId);
+      return next;
+    });
     try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/likes/toggle`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.user.access_token}`,
+        },
+        body: JSON.stringify({ restaurantId }),
+      });
+      const json = await res.json();
+      // Sync lại với server
+      setLikedIds((prev) => {
+        const next = new Set(prev);
+        json.data?.liked ? next.add(restaurantId) : next.delete(restaurantId);
+        return next;
+      });
+    } catch {
+      // Rollback nếu lỗi
+      setLikedIds((prev) => {
+        const next = new Set(prev);
+        next.has(restaurantId) ? next.delete(restaurantId) : next.add(restaurantId);
+        return next;
+      });
+    }
+  }, [session]);
+
+  useEffect(() => { setCurrent(1); }, [keyword]);
+  useEffect(() => { fetchRestaurants(current, keyword); }, [current, keyword]);
+
+  const fetchRestaurants = async (page: number, search: string) => {
+    setLoading(true);
+    try {
+      const searchQuery = search.trim()
+        ? `&name=/${encodeURIComponent(search)}/i`
+        : "";
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/restaurants?current=${page}&pageSize=${pageSize}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/restaurants?current=${page}&pageSize=${pageSize}${searchQuery}`,
       );
       const data = await res.json();
       setRestaurants(data.data?.results ?? []);
       setTotal(data.data?.totalItem ?? 0);
-      console.log(data)
     } catch {
       setRestaurants([]);
     } finally {
@@ -78,10 +152,10 @@ const ListRest = () => {
           }}
         >
           <ShopOutlined style={{ marginRight: 8 }} />
-          Nhà hàng nổi bật
+          {keyword ? `Kết quả: "${keyword}"` : "Nhà hàng nổi bật"}
         </Title>
         <Text style={{ color: "rgba(63, 28, 28, 0.7)", fontSize: 13, marginLeft: 28 }}>
-          {total} nhà hàng đang hoạt động
+          {total} nhà hàng {keyword ? "tìm thấy" : "đang hoạt động"}
         </Text>
       </div>
 
@@ -121,9 +195,17 @@ const ListRest = () => {
                     backdropFilter: "blur(6px)",
                     border: "1px solid rgba(255,255,255,0.3)",
                     cursor: "pointer",
+                    position: "relative",
                   }}
                   styles={{ body: { padding: 16 } }}
                 >
+                  {session && (
+                    <LikeButton
+                      restaurantId={r._id}
+                      liked={likedIds.has(r._id)}
+                      onToggle={handleToggle}
+                    />
+                  )}
                   {/* Name + Rating */}
                   <div style={{ marginBottom: 10 }}>
                     <Text

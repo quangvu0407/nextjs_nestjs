@@ -1,8 +1,11 @@
 "use client";
 
-import { Layout, Menu, Button, Space, Dropdown } from "antd";
-import { ShoppingCartOutlined, MenuOutlined } from "@ant-design/icons";
+import { Layout, Menu, Button, Space, Dropdown, Badge } from "antd";
+import { ShoppingCartOutlined, MenuOutlined, UserOutlined } from "@ant-design/icons";
 import Link from "next/link";
+import { Session } from "next-auth";
+import { getCartStore } from "@/store/cartStore";
+import { useEffect, useState } from "react";
 
 const { Header } = Layout;
 
@@ -12,7 +15,11 @@ const navItems = [
   { key: "about", label: <Link href="/about">Giới thiệu</Link> },
 ];
 
-const HeaderPage = () => {
+const HeaderPage = ({ session }: { session: Session | null }) => {
+  const userId = session?.user?._id ?? "guest";
+  const totalCount = getCartStore(userId)((s) => s.totalCount());
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   return (
     <>
       <style>{`
@@ -63,13 +70,31 @@ const HeaderPage = () => {
         {/* Actions */}
         <Space size={12}>
           <Link href="/cart">
-            <Button icon={<ShoppingCartOutlined />} type="text" size="large" />
+            <Badge count={mounted ? totalCount : 0} size="small">
+              <Button icon={<ShoppingCartOutlined />} type="text" size="large" />
+            </Badge>
           </Link>
-          <Link href="/auth/login">
-            <Button type="primary" danger>
-              Đăng nhập
-            </Button>
-          </Link>
+          {
+            session?.user?._id ?
+              <Link href="/auth/profile">
+                <Button icon={< UserOutlined />} type="text" size="large" />
+              </Link>
+              :
+              <>
+                <Link href="/auth/login">
+                  <Button color="cyan" variant="outlined">
+                    Đăng nhập
+                  </Button>
+                </Link>
+                <Link href="/auth/register">
+                  <Button color="primary" variant="outlined">
+                    Đăng kí
+                  </Button>
+                </Link>
+              </>
+
+          }
+
         </Space>
       </Header>
     </>

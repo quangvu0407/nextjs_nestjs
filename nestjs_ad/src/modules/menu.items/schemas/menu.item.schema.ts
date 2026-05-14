@@ -4,7 +4,7 @@ import { Menu } from 'src/modules/menus/schemas/menu.schema';
 
 export type MenuItemDocument = HydratedDocument<MenuItem>;
 
-@Schema({ timestamps: true })
+@Schema({ timestamps: true, toJSON: { virtuals: true } })
 export class MenuItem {
   @Prop({ type: mongoose.Schema.Types.ObjectId, ref: Menu.name })
   menu: Types.ObjectId;
@@ -23,3 +23,9 @@ export class MenuItem {
 }
 
 export const MenuItemSchema = SchemaFactory.createForClass(MenuItem);
+
+MenuItemSchema.virtual('options', {
+  ref: 'MenuItemOption',
+  localField: '_id',
+  foreignField: 'menuItem',
+});

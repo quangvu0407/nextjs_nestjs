@@ -17,7 +17,7 @@ export class OrdersService {
     private menuItemsService: MenuItemsService,
     private menuItemsOptionService: MenuItemsOptionService,
     private orderDetailService: OrderDetailService,
-  ) {}
+  ) { }
 
   async create(createOrderDto: CreateOrderDto, userId: string) {
     const { restaurant, items } = createOrderDto;
@@ -79,23 +79,60 @@ export class OrdersService {
     return order;
   }
 
-  async findAll(query: any, current: number, pageSize: number) {
+  async findAll(query: any, current: number, pageSize: number, userId?: string) {
     const { current: c, pageSize: p, ...rest } = query;
     current = +c || 1;
     pageSize = +p || 5;
     const { filter, sort } = aqp(rest);
 
+    if (userId) {
+      filter.user = new Types.ObjectId(userId);
+    }
+
     const totalItems = await this.orderModel.countDocuments(filter);
     const totalPage = Math.ceil(totalItems / pageSize);
     const offset = (current - 1) * pageSize;
 
-    const result = await this.orderModel
-      .find(filter)
-      .limit(pageSize)
-      .skip(offset)
-      .sort(sort as any)
-      .populate('user', '-password')
-      .populate('restaurant');
+    const orders = await this.orderModel.aggregate([
+      // 1. Filter trước
+      { $match: { user: new Types.ObjectId(userId) } },
+
+      // 2. Join với collection 'restaurants'
+      {
+        $lookup: {
+          from: 'restaurants',
+          localField: 'restaurant',
+          foreignField: '_id',
+          as: 'restaurant',
+        },
+      },
+
+      // 3. restaurant là array sau lookup, unwind để thành object
+      { $unwind: { path: '$restaurant', preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: 'users',
+          localField: 'user',
+          foreignField: '_id',
+          as: 'user',
+        },
+      },
+      { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
+      { $project: { 'user.password': 0 } },
+
+      // 6. Pagination
+      { $skip: offset },
+      { $limit: pageSize },
+    ])
+
+
+    // Gắn chi tiết món vào từng đơn
+    const result = await Promise.all(
+      orders.map(async (order) => ({
+        ...order,
+        items: await this.orderDetailService.findByOrder(order._id.toString()),
+      }))
+    );
 
     return { current, result, totalPage };
   }

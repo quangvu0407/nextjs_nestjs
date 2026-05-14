@@ -9,6 +9,8 @@ import {
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
 import { IRestaurant } from "@/types/restaurant.type";
+import { useLike } from "@/utils/useLike";
+import { HeartOutlined, HeartFilled } from "@ant-design/icons";
 
 const { Title, Text } = Typography;
 
@@ -24,6 +26,7 @@ const COLORS = ["#e53935", "#fb8c00", "#43a047", "#1e88e5", "#8e24aa", "#00897b"
 
 const RestaurantDetail = ({ restaurant, menus }: { restaurant: IRestaurant; menus: IMenu[] }) => {
   const router = useRouter();
+  const { liked, loading, toggle, isLoggedIn } = useLike(restaurant._id);
 
   return (
     <div style={{ minHeight: "100vh", background: "#f5f5f5" }}>
@@ -72,11 +75,30 @@ const RestaurantDetail = ({ restaurant, menus }: { restaurant: IRestaurant; menu
             </div>
           )}
         </div>
-        <div style={{ padding: "14px 4px 0" }}>
-          <Title level={2} style={{ margin: 0 }}>
-            {restaurant.name}
-          </Title>
-          <Rate disabled defaultValue={restaurant.rating} allowHalf style={{ fontSize: 14 }} />
+        <div style={{ padding: "14px 4px 0", display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <Title level={2} style={{ margin: 0 }}>
+              {restaurant.name}
+            </Title>
+            <Rate disabled defaultValue={restaurant.rating} allowHalf style={{ fontSize: 14 }} />
+          </div>
+          {isLoggedIn && (
+            <button
+              onClick={toggle}
+              disabled={loading}
+              style={{
+                background: liked ? "#fff0f0" : "#f5f5f5",
+                border: `1px solid ${liked ? "#e53935" : "#d9d9d9"}`,
+                borderRadius: 8, padding: "8px 16px",
+                cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
+                fontSize: 14, color: liked ? "#e53935" : "#555",
+                transition: "all 0.2s",
+              }}
+            >
+              {liked ? <HeartFilled /> : <HeartOutlined />}
+              {liked ? "Đã thích" : "Yêu thích"}
+            </button>
+          )}
         </div>
       </div>
 

@@ -3,6 +3,8 @@
 import { Typography, Empty, Card } from "antd";
 import { ArrowLeftOutlined, ShoppingCartOutlined } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import AddToCartModal from "./addToCartModal";
 
 const { Title, Text } = Typography;
 
@@ -14,6 +16,13 @@ interface IMenu {
   restaurant: string;
 }
 
+interface IMenuItemOption {
+  _id: string;
+  title: string;
+  additionalPrice: number;
+  description?: string;
+}
+
 interface IMenuItem {
   _id: string;
   title: string;
@@ -21,12 +30,15 @@ interface IMenuItem {
   basePrice: number;
   image: string;
   menu: string;
+  options: IMenuItemOption[];
 }
 
 const COLORS = ["#e53935", "#fb8c00", "#43a047", "#1e88e5", "#8e24aa", "#00897b"];
 
 const MenuDetail = ({ menu, items }: { menu: IMenu; items: IMenuItem[] }) => {
   const router = useRouter();
+  const [selectedItem, setSelectedItem] = useState<IMenuItem | null>(null);
+  console.log(items)
 
   return (
     <div style={{ minHeight: "100vh", background: "#f0f2f5" }}>
@@ -138,12 +150,14 @@ const MenuDetail = ({ menu, items }: { menu: IMenu; items: IMenuItem[] }) => {
                   }}>
                     {item.basePrice?.toLocaleString("vi-VN")}đ
                   </span>
-                  <button style={{
-                    display: "flex", alignItems: "center", gap: 6,
-                    background: "#e53935", color: "#fff", border: "none",
-                    borderRadius: 20, padding: "6px 14px", fontSize: 12,
-                    cursor: "pointer", fontWeight: 500,
-                  }}>
+                  <button
+                    onClick={() => setSelectedItem(item)}
+                    style={{
+                      display: "flex", alignItems: "center", gap: 6,
+                      background: "#e53935", color: "#fff", border: "none",
+                      borderRadius: 20, padding: "6px 14px", fontSize: 12,
+                      cursor: "pointer", fontWeight: 500,
+                    }}>
                     <ShoppingCartOutlined /> Thêm vào giỏ
                   </button>
                 </div>
@@ -152,6 +166,12 @@ const MenuDetail = ({ menu, items }: { menu: IMenu; items: IMenuItem[] }) => {
           </div>
         )}
       </div>
+      <AddToCartModal
+        item={selectedItem ? { ...selectedItem, restaurantId: menu.restaurant } : null}
+        options={selectedItem?.options ?? []}
+        open={!!selectedItem}
+        onClose={() => setSelectedItem(null)}
+      />
     </div>
   );
 };

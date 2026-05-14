@@ -1,34 +1,28 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Get, Body, Request, UseGuards } from '@nestjs/common';
 import { LikesService } from './likes.service';
 import { CreateLikeDto } from './dto/create-like.dto';
-import { UpdateLikeDto } from './dto/update-like.dto';
+import { JwtGuard } from 'src/auth/Guard/jwt.guard';
 
 @Controller('likes')
+@UseGuards(JwtGuard)
 export class LikesController {
-  constructor(private readonly likesService: LikesService) {}
+  constructor(private readonly likesService: LikesService) { }
 
-  @Post()
-  create(@Body() createLikeDto: CreateLikeDto) {
-    return this.likesService.create(createLikeDto);
+  // Toggle like/unlike một nhà hàng
+  @Post('toggle')
+  toggle(@Request() req, @Body() dto: CreateLikeDto) {
+    return this.likesService.toggle(req.user._id, dto);
   }
 
-  @Get()
-  findAll() {
-    return this.likesService.findAll();
+  // Lấy danh sách nhà hàng đã like
+  @Get('my')
+  getMyLikes(@Request() req) {
+    return this.likesService.getMyLikes(req.user._id);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.likesService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updateLikeDto: UpdateLikeDto) {
-    return this.likesService.update(+id, updateLikeDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.likesService.remove(+id);
+  // Lấy danh sách restaurantId đã like (dùng cho FE check trạng thái)
+  @Get('my/ids')
+  getLikedIds(@Request() req) {
+    return this.likesService.getLikedRestaurantIds(req.user._id);
   }
 }
